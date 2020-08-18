@@ -126,9 +126,11 @@ public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
           // do nothing here as the plugin sent the redirect answer. We want to
           // keep auth inline so the next call can process the authentication.
         } else {
+          final HttpResponse response = new DefaultHttpResponse(HTTP_1_1, status);
           switch (state.getStatus()) {
           case UNAUTHORIZED:
             status = HttpResponseStatus.UNAUTHORIZED;
+            response.headers().add("WWW-Authenticate", "Basic realm=\"opentsdb\"");
             break;
           case FORBIDDEN:
             status = HttpResponseStatus.FORBIDDEN;
@@ -137,8 +139,7 @@ public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
             status = HttpResponseStatus.INTERNAL_SERVER_ERROR;
             break;
           }
-          
-          final HttpResponse response = new DefaultHttpResponse(HTTP_1_1, status);
+
           if (!Strings.isNullOrEmpty(state.getMessage())) {
             // TODO - JSONify or something
             response.setContent(ChannelBuffers.copiedBuffer(
