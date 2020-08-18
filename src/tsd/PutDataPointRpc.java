@@ -848,7 +848,7 @@ class PutDataPointRpc implements TelnetRpc, HttpRpc {
         if (authentication.isReady(tsdb, query.channel())) {
           AuthState authState = (AuthState) query.channel().getAttachment();
           Authorization authorization = authentication.authorization();
-          if ((authorization.hasPermission(authState, Permissions.TELNET_PUT).getStatus() != AuthState.AuthStatus.SUCCESS)) {
+          if ((authorization.hasPermission(authState, Permissions.HTTP_PUT).getStatus() != AuthState.AuthStatus.SUCCESS)) {
             http_requests_forbidden.incrementAndGet();
             throw new BadRequestException(HttpResponseStatus.FORBIDDEN, "Forbidden for " + query.getQueryPath());
           }
