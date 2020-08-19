@@ -127,27 +127,29 @@ public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
           // keep auth inline so the next call can process the authentication.
         } else {
           switch (state.getStatus()) {
-          case UNAUTHORIZED:
-            status = HttpResponseStatus.UNAUTHORIZED;
-            break;
-          case FORBIDDEN:
-            status = HttpResponseStatus.FORBIDDEN;
-            break;
-          default:
-            status = HttpResponseStatus.INTERNAL_SERVER_ERROR;
-            break;
+            case UNAUTHORIZED:
+              status = HttpResponseStatus.UNAUTHORIZED;
+              break;
+            case FORBIDDEN:
+              status = HttpResponseStatus.FORBIDDEN;
+              break;
+            default:
+              status = HttpResponseStatus.INTERNAL_SERVER_ERROR;
+              break;
           }
 
           final HttpResponse response = new DefaultHttpResponse(HTTP_1_1, status);
-          if (state.getStatus() == UNAUTHORIZED) {
-              response.headers().add("WWW-Authenticate", "Basic realm=\"opentsdb\"");
+          if (state.getStatus() == AuthStatus.UNAUTHORIZED) {
+            response.headers().add("WWW-Authenticate", "Basic realm=\"opentsdb\"");
+            response.headers().add("Content-Length", 0);
+            authEvent.getChannel().write(response);
+          } else {
+            if (!Strings.isNullOrEmpty(state.getMessage())) {
+              response.setContent(ChannelBuffers.copiedBuffer(state.getMessage(), Const.UTF8_CHARSET));
+            }
+            authEvent.getChannel().write(response);
+            authEvent.getChannel().close();
           }
-          if (!Strings.isNullOrEmpty(state.getMessage())) {
-            // TODO - JSONify or something
-            response.setContent(ChannelBuffers.copiedBuffer(
-                state.getMessage(), Const.UTF8_CHARSET));
-          }
-          authEvent.getChannel().write(response);
         }
       // Unknown Authentication. Log and close the connection.
       } else {
